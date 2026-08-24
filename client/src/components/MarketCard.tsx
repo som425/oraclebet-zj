@@ -21,7 +21,7 @@ export function MarketCard({ market, odds, className }: Props) {
     <Link
       href={`/markets/${market.id}`}
       className={cn(
-        "group block rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 transition-all hover:border-emerald-500/30 hover:bg-zinc-900",
+        "group block rounded-xl border border-border bg-panel/70 p-5 transition-all hover:-translate-y-0.5 hover:border-brand/50 hover:bg-panel",
         className
       )}
     >

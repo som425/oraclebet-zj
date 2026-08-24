@@ -48,6 +48,9 @@ impl Contract {
         dispute_window: u64,
     ) -> u64 {
         creator.require_auth();
+        assert!(close_time > env.ledger().timestamp(), "close time must be in the future");
+        assert!(dispute_window > 0, "dispute window must be positive");
+        assert!(question.len() > 0, "question must not be empty");
 
         let mut count: u64 = env.storage().instance().get(&DataKey::MarketCount).unwrap_or(0);
         count += 1;
@@ -93,7 +96,7 @@ impl Contract {
         let existing: i128 = env.storage().persistent().get(&key).unwrap_or(0);
         env.storage().persistent().set(&key, &(existing + amount));
 
-        market.yes_pool += amount;
+        market.yes_pool = market.yes_pool.checked_add(amount).expect("pool overflow");
         env.storage().instance().set(&DataKey::Market(market_id), &market);
 
         env.events().publish(
@@ -117,7 +120,7 @@ impl Contract {
         let existing: i128 = env.storage().persistent().get(&key).unwrap_or(0);
         env.storage().persistent().set(&key, &(existing + amount));
 
-        market.no_pool += amount;
+        market.no_pool = market.no_pool.checked_add(amount).expect("pool overflow");
         env.storage().instance().set(&DataKey::Market(market_id), &market);
 
         env.events().publish(

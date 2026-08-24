@@ -1,39 +1,27 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #000000;
-  --color-foreground: #f1f5f9;
+  --color-background: #0b0d0f;
+  --color-foreground: #eef2ef;
+  --color-surface: #111518;
+  --color-panel: #171c1f;
+  --color-border: #283136;
+  --color-muted-foreground: #8d9b9a;
+  --color-brand: #b7f36b;
+  --color-brand-foreground: #0b0d0f;
+  --color-danger: #ff7d73;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-body {
-  background: #000000;
-  color: #f1f5f9;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #18181b;
-}
-::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
-}
-
-/* Remove input arrows */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"] {
-  -moz-appearance: textfield;
-}
+:root { color-scheme: dark; }
+html { background: #0b0d0f; }
+body { background: #0b0d0f; color: #eef2ef; font-family: var(--font-geist-sans), sans-serif; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #111518; }
+::-webkit-scrollbar-thumb { background: #283136; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8d9b9a; }
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
