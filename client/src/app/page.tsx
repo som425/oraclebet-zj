@@ -26,7 +26,9 @@ function useAllMarkets() {
       return results;
     },
     enabled: countNum > 0 && CONFIG.contractId !== "YOUR_CONTRACT_ADDRESS_HERE",
-    refetchInterval: 15_000,
+    refetchInterval: 10_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 

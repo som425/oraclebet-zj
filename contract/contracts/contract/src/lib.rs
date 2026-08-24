@@ -1,6 +1,6 @@
 #![no_std]
 #![allow(deprecated)]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Symbol};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, IntoVal, String, Symbol};
 
 #[contracttype]
 #[derive(Clone)]
@@ -25,6 +25,7 @@ pub enum DataKey {
     UserYesBet(u64, Address),
     UserNoBet(u64, Address),
     Oracle,
+    OracleAdapter,
     MarketCount,
 }
 
@@ -144,6 +145,31 @@ impl Contract {
         env.storage().instance().set(&DataKey::Market(market_id), &market);
 
         env.events().publish((Symbol::new(&env, "market_closed"),), (market_id,));
+    }
+
+    pub fn set_oracle_adapter(env: Env, oracle: Address, adapter: Address) {
+        oracle.require_auth();
+        let stored: Address = env.storage().instance().get(&DataKey::Oracle).expect("not initialized");
+        assert_eq!(oracle, stored, "not authorized");
+        env.storage().instance().set(&DataKey::OracleAdapter, &adapter);
+        env.events().publish((Symbol::new(&env, "oracle_adapter_set"),), (oracle, adapter));
+    }
+
+    pub fn get_oracle_adapter(env: Env) -> Option<Address> {
+        env.storage().instance().get(&DataKey::OracleAdapter)
+    }
+
+    pub fn resolve_market_from_adapter(env: Env, market_id: u64) {
+        let adapter: Address = env.storage().instance().get(&DataKey::OracleAdapter).expect("adapter not configured");
+        let result: u32 = env.invoke_contract(&adapter, &Symbol::new(&env, "resolve"), (market_id,).into_val(&env));
+        assert!(result == 1 || result == 2, "adapter returned invalid result");
+        let mut market: Market = env.storage().instance().get(&DataKey::Market(market_id)).expect("market not found");
+        assert!(market.status == 1, "market not closed");
+        market.status = 2;
+        market.oracle_result = result;
+        market.resolution_time = env.ledger().timestamp();
+        env.storage().instance().set(&DataKey::Market(market_id), &market);
+        env.events().publish((Symbol::new(&env, "result_submitted_by_adapter"),), (market_id, adapter, result));
     }
 
     pub fn resolve_market(env: Env, oracle: Address, market_id: u64, result: u32) {

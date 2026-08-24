@@ -99,7 +99,11 @@ export async function callContract(
 
   const prepared = rpc.assembleTransaction(tx, sim).build();
   const txXdr = prepared.toXDR();
-  return signAndSend(txXdr);
+  const hash = await signAndSend(txXdr);
+  if (!hash) {
+    throw new Error(`Transaction ${method} was not submitted`);
+  }
+  return hash;
 }
 
 // --- Market ScVal parsing ---
