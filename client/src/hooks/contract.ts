@@ -1,7 +1,15 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { rpc, Contract, nativeToScVal, scValToNative, Address, TransactionBuilder } from "@stellar/stellar-sdk";
+import {
+  rpc,
+  Contract,
+  nativeToScVal,
+  scValToNative,
+  Address,
+  TimeoutInfinite,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
 import { CONFIG } from "@/config";
 import { useWallet } from "./useWallet";
 import { useAppStore } from "@/store";
@@ -50,6 +58,7 @@ export async function readContract(
     fee: "100",
     networkPassphrase: CONFIG.networkPassphrase,
   })
+    .setTimeout(TimeoutInfinite)
     .addOperation(contract.call(method, ...params))
     .build();
 
@@ -79,6 +88,7 @@ export async function callContract(
     fee: "100",
     networkPassphrase: CONFIG.networkPassphrase,
   })
+    .setTimeout(TimeoutInfinite)
     .addOperation(contract.call(method, ...params))
     .build();
 
