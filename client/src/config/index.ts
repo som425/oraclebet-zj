@@ -1,7 +1,7 @@
 // OracleBet Configuration
 // Update these after contract deployment
 export const CONFIG = {
-  contractId: "CD5OLPVADHW6J5TTX6QV5YJVCPRISFDIEUMW4CKSA4VIVHL6WGCMOSOF",
+  contractId: "CCOLQYWZBHNR2B234Y3G2FNMVHWS4FIRR3QSBRUOPUANF66N4SB4R3VS",
   networkPassphrase: "Test SDF Network ; September 2015",
   rpcUrl: "https://soroban-testnet.stellar.org",
   horizonUrl: "https://horizon-testnet.stellar.org",
