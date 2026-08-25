@@ -35,20 +35,18 @@ export default function CreateMarketPage() {
       return;
     }
 
-    createMarket.mutate(
-      {
+    try {
+      await createMarket.mutateAsync({
         question: form.question,
         description: form.description,
         category: form.category,
         closeTime: closeTimeUnix,
         disputeWindow: disputeWindowSecs,
-      },
-      {
-        onSuccess: () => {
-          router.push("/");
-        },
-      }
-    );
+      });
+      router.push("/");
+    } catch {
+      // The mutation error is rendered below the form.
+    }
   };
 
   if (!connected) {

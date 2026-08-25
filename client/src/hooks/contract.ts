@@ -1,7 +1,15 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { rpc, Contract, nativeToScVal, scValToNative, Address, TransactionBuilder } from "@stellar/stellar-sdk";
+import {
+  rpc,
+  Contract,
+  nativeToScVal,
+  scValToNative,
+  Address,
+  TimeoutInfinite,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
 import { CONFIG } from "@/config";
 import { useWallet } from "./useWallet";
 import { useAppStore } from "@/store";
@@ -50,6 +58,7 @@ export async function readContract(
     fee: "100",
     networkPassphrase: CONFIG.networkPassphrase,
   })
+    .setTimeout(TimeoutInfinite)
     .addOperation(contract.call(method, ...params))
     .build();
 
@@ -79,17 +88,46 @@ export async function callContract(
     fee: "100",
     networkPassphrase: CONFIG.networkPassphrase,
   })
+    .setTimeout(TimeoutInfinite)
     .addOperation(contract.call(method, ...params))
     .build();
 
   const sim = await server.simulateTransaction(tx);
   if (!rpc.Api.isSimulationSuccess(sim)) {
-    throw new Error(`Simulation failed for ${method}`);
+    const failure = sim as rpc.Api.SimulateTransactionErrorResponse;
+    const details = [
+      failure.error,
+      failure.latestLedger ? `latest ledger ${failure.latestLedger}` : undefined,
+    ]
+      .filter(Boolean)
+      .join(" — ");
+    throw new Error(`Simulation failed for ${method}${details ? `: ${details}` : ""}`);
   }
 
   const prepared = rpc.assembleTransaction(tx, sim).build();
   const txXdr = prepared.toXDR();
-  return signAndSend(txXdr);
+  const hash = await signAndSend(txXdr);
+  if (!hash) {
+    throw new Error(`Transaction ${method} was not submitted`);
+  }
+  return hash;
+}
+
+async function waitForTransaction(hash: string, timeoutMs = 45_000) {
+  const server = new rpc.Server(CONFIG.rpcUrl);
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const result = await server.getTransaction(hash);
+      if (result.status === "SUCCESS") return result;
+      if (result.status === "FAILED") throw new Error(`Transaction failed: ${hash}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Transaction failed:")) throw error;
+      // RPC can briefly return NOT_FOUND while the transaction propagates.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+  throw new Error(`Transaction is still pending after ${timeoutMs / 1000}s: ${hash}`);
 }
 
 // --- Market ScVal parsing ---
@@ -323,10 +361,22 @@ export function useCreateMarket() {
         address,
         signAndSend
       );
+      await waitForTransaction(hash);
       return { hash, ...params };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["marketCount"] });
+    onSuccess: async ({ hash }) => {
+      useAppStore.getState().addTransaction({
+        hash,
+        status: "confirmed",
+        timestamp: Date.now(),
+        confirmedAt: Date.now(),
+        action: "Create Market",
+        marketId: 0,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["marketCount"] });
+      await queryClient.refetchQueries({ queryKey: ["marketCount"] });
+      await queryClient.invalidateQueries({ queryKey: ["allMarkets"] });
+      await queryClient.refetchQueries({ queryKey: ["allMarkets"] });
     },
   });
 }

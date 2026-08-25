@@ -154,7 +154,7 @@ export function useWallet() {
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Transaction failed";
         setError(msg);
-        return null;
+        throw new Error(msg);
       }
     },
     []
