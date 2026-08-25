@@ -94,7 +94,14 @@ export async function callContract(
 
   const sim = await server.simulateTransaction(tx);
   if (!rpc.Api.isSimulationSuccess(sim)) {
-    throw new Error(`Simulation failed for ${method}`);
+    const failure = sim as rpc.Api.SimulateTransactionErrorResponse;
+    const details = [
+      failure.error,
+      failure.latestLedger ? `latest ledger ${failure.latestLedger}` : undefined,
+    ]
+      .filter(Boolean)
+      .join(" — ");
+    throw new Error(`Simulation failed for ${method}${details ? `: ${details}` : ""}`);
   }
 
   const prepared = rpc.assembleTransaction(tx, sim).build();
