@@ -101,7 +101,11 @@ export async function callContract(
     ]
       .filter(Boolean)
       .join(" — ");
-    throw new Error(`Simulation failed for ${method}${details ? `: ${details}` : ""}`);
+    const message = `${failure.error ?? ""}`;
+    const abiHint = message.includes("MismatchingParameterLen")
+      ? " The deployed contract ABI does not match this client. Redeploy the current Soroban contract and update the contract address."
+      : "";
+    throw new Error(`Simulation failed for ${method}${details ? `: ${details}` : ""}.${abiHint}`);
   }
 
   const prepared = rpc.assembleTransaction(tx, sim).build();
